@@ -8,8 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Task extends Model
 {
     use HasFactory;
-    protected $guarded = [];
 
+    protected $fillable = [
+        'title',
+        'description'
+    ];
+
+    
     public function getStatus():string
     {
         switch ($this->status){

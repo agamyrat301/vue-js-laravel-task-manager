@@ -109,12 +109,12 @@ export default {
         const isLoading = ref(false);
         const currentPage = ref(1);
         const currentTaskSelected = ref(null);
-        const { notify }  = useNotification()
+        const { notify } = useNotification()
 
         const confirmModalActive = ref(false)
 
         const fetchTasks = async () => {
-           
+
             isLoading.value = true;
             try {
                 const response = await axios.get('/tasks');
@@ -137,8 +137,24 @@ export default {
         }
 
         const deleteTask = () => {
-            alert(currentTaskSelected.value);
-            return
+            isLoading.value = true;
+            axios.delete(`tasks/${currentTaskSelected.value}`).then(resp => {
+                console.log(resp.status)
+                if (resp.status == 204) {
+                    notify({
+                        title: "Deletion",
+                        text: "task was deleted successfully",
+                    });
+                    confirmModalActive.value = false
+                    currentTaskSelected.value = null
+                    fetchTasks()
+
+                }
+                isLoading.value = false;
+
+            }).catch(err => {
+                alert(JSON.stringify(err))
+            })
         }
 
         onMounted(fetchTasks);
