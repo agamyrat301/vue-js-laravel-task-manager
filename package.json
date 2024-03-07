@@ -15,7 +15,10 @@
         "vite": "^5.0.0"
     },
     "dependencies": {
+        "@kyvg/vue3-notification": "^3.2.0",
         "vue": "^3.4.21",
-        "vue-router": "^4.0.13"
+        "vue-awesome-paginate": "^1.1.46",
+        "vue-router": "^4.0.13",
+        "vue3-snackbar": "^2.2.0"
     }
 }

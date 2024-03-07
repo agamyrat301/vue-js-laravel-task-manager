@@ -18,7 +18,8 @@ class Task extends JsonResource
             'id'=>(int)$this->id,
             'title'=>(string)$this->title,
             'description'=>(string)$this->description,
-            'status'=>(string)$this->getStatus()
+            'status'=>(string)$this->getStatus(),
+            'created'=> date_format($this->created_at,"d-m-Y H:i:s")
         ];
     }
 }
