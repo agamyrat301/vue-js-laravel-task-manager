@@ -4,6 +4,7 @@ import {createApp} from 'vue'
 import Navbar from './components/Navbar.vue';
 import taskCreate from './components/Tasks/create.vue';
 import taskIndex from './components/Tasks/index.vue';
+import taskEdit from './components/Tasks/edit.vue';
 import Loading from './components/Loading.vue';
 import ConfirmModal from './components/Modal.vue';
 
@@ -23,6 +24,7 @@ const app = createApp(App).use(router).use(VueAwesomePaginate).use(Notifications
 app.component('navbar', Navbar);
 app.component('tasks-create', taskCreate);
 app.component('tasks-index', taskIndex);
+app.component('tasks-edit', taskEdit);
 app.component('custom-loading', Loading);
 app.component('confirm-modal', ConfirmModal);
 app.mount('#app');

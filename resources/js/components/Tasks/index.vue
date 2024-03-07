@@ -23,9 +23,22 @@
     </confirm-modal>
 
     <div class="container">
+
         <div class="flex justify-between items-center">
-            <h1 class="text-xl font-bold">Tasks</h1>
-            <div class="my-4">
+            <h1 class="text-xl font-bold">Tasks : {{ tasksCount }}</h1>
+            <div class="my-4 inline-flex justify-between w-auto">
+
+                
+
+                 <select v-model="filters.status" @change="filterTasks"
+                    class=" border mr-3 border-gray-300 text-gray-900 text-sm rounded-lg
+                     focus:ring-blue-500 focus:border-blue-500 block">
+                    <option disabled>Choose a status</option>
+                    <option value="0">pending</option>
+                    <option value="1">in progress</option>
+                    <option value="2">done</option>
+                </select>
+
                 <router-link :to='{ name: "tasks-create" }'
                     class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Create
                     Task</router-link>
@@ -33,6 +46,7 @@
         </div>
 
         <div class="relative overflow-x-auto">
+
 
             <div v-if="isLoading">
                 <custom-loading />
@@ -79,8 +93,8 @@
                             {{ task.created }}
                         </td>
                         <td class="px-6 py-4 flex">
-                            <button type="button"
-                                class="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Edit</button>
+                            <router-link :to='{ name: "tasks-edit",params: { id: task.id } }'
+                                class="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Edit</router-link>
                             <button type="button" @click="toggleModal(task.id)" class="text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4
                          focus:ring-red-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 
                          mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
@@ -90,35 +104,43 @@
                     </tr>
                 </tbody>
             </table>
-            <vue-awesome-paginate :total-items="tasks.length" :items-per-page="10" :max-pages-shown="5"
-                v-model="currentPage" :on-click="onClickHandler" />
+            <div class="w-full justify-center flex" v-if="!isLoading">
+                <vue-awesome-paginate :total-items="tasksCount" :items-per-page="10" :max-pages-shown="5"
+                    v-model="currentPage" :on-click="onClickHandler" />
+            </div>
         </div>
-
     </div>
 </template>
 
 <script>
 
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import axios from '../../axios';
 import { useNotification } from "@kyvg/vue3-notification";
 
 export default {
     setup() {
         const tasks = ref([]);
+        const tasksCount = ref(0);
+        
         const isLoading = ref(false);
         const currentPage = ref(1);
         const currentTaskSelected = ref(null);
         const { notify } = useNotification()
+        const filters = reactive({
+            status:'',
+            dates:[]
+        })
 
         const confirmModalActive = ref(false)
 
-        const fetchTasks = async () => {
+        const fetchTasks = async (page) => {
 
             isLoading.value = true;
             try {
-                const response = await axios.get('/tasks');
-                console.log(response.data?.data, 'RESPONSE')
+                const response = await axios.get(`/tasks?status=${filters.status}&page=${page}`);
+                console.log(response.data?.meta?.total,'response')
+                tasksCount.value = response.data?.meta?.total
                 tasks.value = response.data?.data;
                 isLoading.value = false;
             } catch (error) {
@@ -127,13 +149,17 @@ export default {
             }
         };
 
-        const onClickHandler = (page) => {
-            console.log(page);
+        const onClickHandler = () => {
+            fetchTasks(currentPage.value)
         };
 
         const toggleModal = (task_id) => {
             currentTaskSelected.value = task_id
             confirmModalActive.value = true
+        }
+
+        const filterTasks = () =>{
+            fetchTasks(currentPage.value)
         }
 
         const deleteTask = () => {
@@ -143,6 +169,7 @@ export default {
                 if (resp.status == 204) {
                     notify({
                         title: "Deletion",
+                        type: "warn",
                         text: "task was deleted successfully",
                     });
                     confirmModalActive.value = false
@@ -157,10 +184,15 @@ export default {
             })
         }
 
-        onMounted(fetchTasks);
+        onMounted(()=>{
+            fetchTasks(currentPage.value)
+        });
         return {
             tasks,
             isLoading,
+            filters,
+            tasksCount,
+            filterTasks,
             currentPage,
             onClickHandler,
             toggleModal,

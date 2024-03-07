@@ -10,14 +10,25 @@
                     placeholder="title" required />
             </div>
             <div>
-                <label for="password"
+                <label for="description"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">description</label>
-                <input type="text" placeholder="description" v-model="formData.desc"
+                <input type="text" placeholder="description" v-model="formData.description"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
                     required />
             </div>
 
-            <button :disabled="isLoading" type="button" @click="submitForm" class="py-2.5 px-5 mr-2 text-sm font-medium text-gray-900 bg-blue-700 rounded-lg 
+            <div>
+                <label for="status" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">status</label>
+                <select id="countries" v-model="formData.status"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option disabled>Choose a country</option>
+                    <option value="0" :selected="formData.status == 0">pending</option>
+                    <option value="1" :selected="formData.status == 1">in progress</option>
+                    <option value="2" :selected="formData.status == 2">done</option>
+                </select>
+            </div>
+
+            <button :disabled="isLoading" type="button" @click="updateForm" class="py-2.5 px-5 mr-2 text-sm font-medium text-gray-900 bg-blue-700 rounded-lg 
                 border w-full border-gray-200 hover:bg-gray-100  border-none
                 focus:z-10 focus:ring-4 focus:outline-none  
                     dark:hover:text-white
@@ -32,16 +43,15 @@
                         d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
                         fill="#1C64F2"></path>
                 </svg>
-                {{ isLoading ? 'Loading...' : 'Save' }}
+                {{ isLoading ? 'Loading...' : 'Update' }}
             </button>
         </form>
     </div>
-
 </template>
 
 <script>
 import axios from '../../axios';
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router'
 import { useNotification } from "@kyvg/vue3-notification";
 
@@ -50,26 +60,40 @@ export default {
     setup() {
         const formData = reactive({
             title: '',
-            desc: ''
+            description: '',
+            status: ''
         })
+        const currentTask = ref(null)
         const { notify } = useNotification()
         const router = useRouter()
 
         const isLoading = ref(false)
 
-        const submitForm = () => {
+        const getTask = () => {
+            axios.get(`/tasks/${router.currentRoute.value.params?.id}`).then(resp => {
+                console.log('resp edit', resp.data)
+                currentTask.value = resp.data
+                formData.description = resp.data?.description
+                formData.title = resp.data?.title
+                formData.status = resp.data?.status_int
+            })
+        }
+
+        const updateForm = () => {
             isLoading.value = true
             const formD = new FormData();
             formD.append('title', formData.title);
             formD.append('description', formData.desc);
-            axios.post('/tasks', formD, {}).then(resp => {
+            formD.append('status', formData.status);
+
+            axios.patch(`/tasks/${router.currentRoute.value.params?.id}`, formData, {}).then(resp => {
                 isLoading.value = false
-                if (resp.status == 201) {
+                if (resp.status == 200) {
                     router.push('/')
                     notify({
-                        title: "Create",
+                        title: "Update",
                         type: "success",
-                        text: "task was created successfully",
+                        text: "task was updated successfully",
                     });
                 }
             }).catch(err => {
@@ -83,10 +107,13 @@ export default {
             })
         }
 
+        onMounted(getTask)
+
         return {
             formData,
-            submitForm,
-            isLoading
+            updateForm,
+            isLoading,
+            currentTask
         };
     }
 }

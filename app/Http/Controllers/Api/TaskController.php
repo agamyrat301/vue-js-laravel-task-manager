@@ -16,8 +16,27 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {
-        $tasks = Task::paginate(10);
-        return TaskResource::collection($tasks);
+        $tasks = Task::query();
+        if ($request->has('status') && !empty($request->get('status'))) {
+
+            switch ($request->get('status')) {
+                case 0:
+                    $tasks->where('status', 0);
+                    break;
+                case 1:
+                    $tasks->where('status', 1);
+                    break;
+                case 2:
+                    $tasks->where('status', 2);
+                    break;
+
+                default:
+                    $tasks->where('status', 0);
+                    break;
+            }
+        }
+
+        return TaskResource::collection($tasks->paginate(10));
     }
 
     /**
@@ -29,31 +48,42 @@ class TaskController extends Controller
             'title' => 'required',
             'description' => 'required',
         ]);
-        
-        if($validator->fails()){
-            return response()->json([$validator->errors()],400);
+
+        if ($validator->fails()) {
+            return response()->json([$validator->errors()], 400);
         }
-        
+
         $task = Task::create($request->all());
         return (new TaskResource($task))
-        ->response()
-        ->setStatusCode(201);
+            ->response()
+            ->setStatusCode(201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Task $task)
     {
-        //
+        return new TaskResource($task);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Task $task, Request $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'title' => 'required',
+            'description' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([$validator->errors()], 400);
+        }
+        $task->update($request->all());
+        return (new TaskResource($task))
+            ->response()
+            ->setStatusCode(200);
     }
 
     /**
@@ -63,7 +93,7 @@ class TaskController extends Controller
     {
         try {
             $task->delete();
-            return response()->json('task deleted',204);
+            return response()->json('task deleted', 204);
         } catch (\Throwable $th) {
             //throw $th;
             return response()->json(['error' => $th->getMessage()], 500);
