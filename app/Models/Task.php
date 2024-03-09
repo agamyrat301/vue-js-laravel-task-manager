@@ -19,13 +19,13 @@ class Task extends Model
     public function getStatus():string
     {
         switch ($this->status){
-            case 0:
+            case 'pending':
                 return 'pending';
                 break;
-            case 1:
+            case 'progress':
                 return 'in progress';
                 break;
-            case 2:
+            case 'done':
                 return 'done';
                 break;
         }

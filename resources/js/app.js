@@ -15,6 +15,9 @@ import App from './App.vue'
 import VueAwesomePaginate from "vue-awesome-paginate";
 import Notifications from '@kyvg/vue3-notification'
 
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css'
+
 import "vue3-snackbar/styles";
 
 // import the necessary css file
@@ -27,4 +30,6 @@ app.component('tasks-index', taskIndex);
 app.component('tasks-edit', taskEdit);
 app.component('custom-loading', Loading);
 app.component('confirm-modal', ConfirmModal);
+app.component('VueDatePicker', VueDatePicker);
+
 app.mount('#app');

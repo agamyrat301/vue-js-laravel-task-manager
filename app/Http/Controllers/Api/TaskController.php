@@ -17,23 +17,34 @@ class TaskController extends Controller
     public function index(Request $request)
     {
         $tasks = Task::query();
-        if ($request->has('status') && !empty($request->get('status'))) {
+        $from = $request->get('from');
+        $to = $request->get('to');
+        $status = $request->get('status');
+
+        if ($status) {
 
             switch ($request->get('status')) {
-                case 0:
-                    $tasks->where('status', 0);
+                case 'pending':
+                    $tasks->where('status', 'pending');
                     break;
-                case 1:
-                    $tasks->where('status', 1);
+                case 'progress':
+                    $tasks->where('status', 'progress');
                     break;
-                case 2:
-                    $tasks->where('status', 2);
+                case 'done':
+                    $tasks->where('status', 'done');
                     break;
 
                 default:
-                    $tasks->where('status', 0);
                     break;
             }
+        }
+
+        if($from !== null){
+            $tasks->where('created_at', '<=',$from);
+        }
+
+        if($to !== null){
+            $tasks->where('created_at', '>=',$to);
         }
 
         return TaskResource::collection($tasks->paginate(10));

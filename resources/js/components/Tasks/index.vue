@@ -26,28 +26,27 @@
 
         <div class="flex justify-between items-center">
             <h1 class="text-xl font-bold">Tasks : {{ tasksCount }}</h1>
-            <div class="my-4 inline-flex justify-between w-auto">
+            <div class="my-4 inline-flex justify-center w-7/12">
+                <VueDatePicker class="mr-4 w-full" v-model="date" model-type="yyyy-dd-MM" range
+                    @update:model-value="handleDate" />
 
-                
-
-                 <select v-model="filters.status" @change="filterTasks"
-                    class=" border mr-3 border-gray-300 text-gray-900 text-sm rounded-lg
+                <select v-model="filters.status" @change="filterTasks" class=" border mr-3 border-gray-300 text-gray-900 text-sm rounded-lg
                      focus:ring-blue-500 focus:border-blue-500 block">
                     <option disabled>Choose a status</option>
-                    <option value="0">pending</option>
-                    <option value="1">in progress</option>
-                    <option value="2">done</option>
+                    <option value="pending">pending</option>
+                    <option value="progress">in progress</option>
+                    <option value="done">done</option>
                 </select>
 
-                <router-link :to='{ name: "tasks-create" }'
-                    class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Create
+                <router-link :to='{ name: "tasks-create" }' class="text-white bg-blue-700 px-10 hover:bg-blue-800 focus:ring-4
+                     focus:ring-blue-300
+                     font-medium rounded-lg text-sm dark:bg-blue-600 dark:hover:bg-blue-700 
+                     focus:outline-none dark:focus:ring-blue-800">Create
                     Task</router-link>
             </div>
         </div>
 
         <div class="relative overflow-x-auto">
-
-
             <div v-if="isLoading">
                 <custom-loading />
             </div>
@@ -93,7 +92,7 @@
                             {{ task.created }}
                         </td>
                         <td class="px-6 py-4 flex">
-                            <router-link :to='{ name: "tasks-edit",params: { id: task.id } }'
+                            <router-link :to='{ name: "tasks-edit", params: { id: task.id } }'
                                 class="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Edit</router-link>
                             <button type="button" @click="toggleModal(task.id)" class="text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4
                          focus:ring-red-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 
@@ -122,24 +121,27 @@ export default {
     setup() {
         const tasks = ref([]);
         const tasksCount = ref(0);
-        
+        const date = ref(null);
+
         const isLoading = ref(false);
         const currentPage = ref(1);
         const currentTaskSelected = ref(null);
         const { notify } = useNotification()
         const filters = reactive({
-            status:'',
-            dates:[]
+            status: '',
+            dates: []
         })
 
         const confirmModalActive = ref(false)
 
         const fetchTasks = async (page) => {
+            let from = date.value?.[0] ?? '';
+            let to = date.value?.[1] ?? '';
 
             isLoading.value = true;
             try {
-                const response = await axios.get(`/tasks?status=${filters.status}&page=${page}`);
-                console.log(response.data?.meta?.total,'response')
+                const response = await axios.get(`/tasks?status=${filters.status}&page=${page}&from=${from}&to=${to}`);
+                console.log(response.data?.meta?.total, 'response')
                 tasksCount.value = response.data?.meta?.total
                 tasks.value = response.data?.data;
                 isLoading.value = false;
@@ -147,6 +149,10 @@ export default {
                 console.error('Error fetching tasks:', error);
                 isLoading.value = false;
             }
+        };
+
+        const handleDate = () => {
+            fetchTasks(currentPage.value)
         };
 
         const onClickHandler = () => {
@@ -158,7 +164,7 @@ export default {
             confirmModalActive.value = true
         }
 
-        const filterTasks = () =>{
+        const filterTasks = () => {
             fetchTasks(currentPage.value)
         }
 
@@ -184,7 +190,7 @@ export default {
             })
         }
 
-        onMounted(()=>{
+        onMounted(() => {
             fetchTasks(currentPage.value)
         });
         return {
@@ -198,7 +204,9 @@ export default {
             toggleModal,
             confirmModalActive,
             deleteTask,
-            notify
+            notify,
+            date,
+            handleDate
         };
     }
 }
